@@ -2,11 +2,11 @@ import re
 import sys
 import copy
 import types
-import inspect
 import keyword
 import itertools
 import annotationlib
 import abc
+from functools import unwrap
 from reprlib import recursive_repr
 
 
@@ -1163,6 +1163,12 @@ def _process_class(cls, init, repr, eq, order, unsafe_hash, frozen,
         try:
             # In some cases fetching a signature is not possible.
             # But, we surely should not fail in this case.
+
+            # consider having func_builder.add_fns_to_class return
+            # a signature to use instead, this currently
+            # only removes the inspect import if dataclasses
+            # have a docstring, which is an odd side-effect
+            import inspect
             text_sig = str(inspect.signature(cls)).replace(' -> None', '')
         except (TypeError, ValueError):
             text_sig = ''
@@ -1320,7 +1326,7 @@ def _add_slots(cls, is_frozen, weakref_slot, defined_fields):
     # given cell.
     for member in newcls.__dict__.values():
         # If this is a wrapped function, unwrap it.
-        member = inspect.unwrap(member)
+        member = unwrap(member)
 
         if isinstance(member, types.FunctionType):
             if _update_func_cell_for__class__(member, cls, newcls):
